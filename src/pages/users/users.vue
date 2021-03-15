@@ -219,6 +219,11 @@ export default {
             this.$message.success('添加用户成功！')
             this.getUserList()
             this.dialogFormVisible = false
+            for (const key in this.formRegisterMessage) {
+              if (this.formRegisterMessage.hasOwnProperty(key)) {
+                this.formRegisterMessage[key] = ''
+              }
+            }
             this.formRegisterMessage.username = ''
             this.formRegisterMessage.telephone = ''
             this.formRegisterMessage.email = ''
