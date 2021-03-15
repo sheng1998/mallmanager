@@ -2,16 +2,23 @@
   <div class="login">
     <div class="center">
       <h2>用户登录</h2>
-      <el-form label-position="top" label-width="80px" :model="formLoginMessage">
+      <el-form
+        label-position="top"
+        label-width="80px"
+        :model="formLoginMessage"
+      >
         <el-form-item label="用户名">
           <el-input required v-model="formLoginMessage.username"></el-input>
         </el-form-item>
         <el-form-item label="密码">
-          <el-input required type="password" v-model="formLoginMessage.password"></el-input>
+          <el-input
+            required
+            type="password"
+            v-model="formLoginMessage.password"
+          ></el-input>
         </el-form-item>
         <el-form-item class="form-btn">
-          <el-button type="primary" @click="handleLogin()">登录</el-button>
-          <el-button type="success" @click="toRegisterPage()">注册</el-button>
+          <el-button type="success" @click="handleLogin()">登录</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -23,31 +30,30 @@ export default {
   data () {
     return {
       formLoginMessage: {
-        username: '',
-        password: ''
+        username: 'admit',
+        password: '123456'
       }
     }
   },
   methods: {
     // 发送登录请求
     handleLogin () {
-      if (this.formLoginMessage.username.trim() && this.formLoginMessage.password.trim()) {
-        this.$axios.post('login', this.formLoginMessage).then((res) => {
+      if (!this.formLoginMessage.username.trim()) {
+        this.$message.warning('请输入用户名！')
+      } else if (!this.formLoginMessage.password.trim()) {
+        this.$message.warning('请输入密码！')
+      } else {
+        this.$axios.post('login', this.formLoginMessage).then(res => {
           let data = res.data
           if (data.code === 200) {
             this.$message.success('登陆成功！')
-            this.$router.push({name: 'home'})
+            this.$router.push({ name: 'home' })
+            window.localStorage.token = data.token
           } else {
             this.$message.error('登陆失败，' + data.message)
           }
-          console.log(res)
         })
       }
-    },
-
-    // 跳转至注册页面
-    toRegisterPage () {
-      this.$router.push('/register')
     }
   }
 }
@@ -58,22 +64,22 @@ export default {
   width: 100%;
   height: 100%;
   background-image: url('../../../static/image/bg-login.jpg');
-  background-repeat:no-repeat;
-  background-size:100% 100%;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1;
 
-  &:after{
-    content: "";
-    width:100%;
-    height:100%;
+  &:after {
+    content: '';
+    width: 100%;
+    height: 100%;
     position: absolute;
-    left:0;
-    top:0;
+    left: 0;
+    top: 0;
     background: inherit;
-    filter: blur(2px);/*为了模糊更明显，调高模糊度*/
+    filter: blur(2px); /*为了模糊更明显，调高模糊度*/
     z-index: 2;
   }
 
@@ -96,7 +102,7 @@ export default {
       align-items: center;
 
       button {
-        width: 100px;
+        width: 200px;
 
         a {
           color: white;

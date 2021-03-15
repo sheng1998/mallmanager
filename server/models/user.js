@@ -26,9 +26,13 @@ let userSchema = new Schema({
     },
     // 权限
     limit: {
-        type: Number,
-        default: 1,
-        enum: [-1, 0, 1, 2]
+        type: Boolean,
+        default: false
+    },
+    // 角色
+    role_name: {
+        type: String,
+        default: '普通用户'
     },
     // 创建时间
     created_time: {

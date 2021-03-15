@@ -6,6 +6,7 @@ import router from './router'
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import MyAxios from './plugin/axios.js' // 引入自定义的 axios 插件
+import './filters/fmtdata.js' // 引入时间过滤器
 
 Vue.use(ElementUI)
 Vue.use(MyAxios)
