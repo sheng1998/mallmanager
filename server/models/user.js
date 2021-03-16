@@ -29,15 +29,26 @@ let userSchema = new Schema({
         type: Boolean,
         default: false
     },
-    // 角色
-    role_name: {
-        type: String,
-        default: '普通用户'
+    // 角色id
+    // 普通用户: 18
+    // 主管: 28
+    // 项目经理: 58
+    // 产品经理: 68
+    // 超级管理员: 168
+    role_id: {
+        type: Number,
+        default: 18,
+        enum: [18, 28, 58, 68, 168]
     },
     // 创建时间
     created_time: {
         type: Date,
         default: Date.now
+    },
+    // 是否已经删除该用户，默认为未删除，此做法为了防止数据丢失，可以随时恢复
+    isDelete: {
+        type: Boolean,
+        default: false
     }
 })
 

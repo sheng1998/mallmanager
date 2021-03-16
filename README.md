@@ -20,6 +20,30 @@ npm run build --report
 
 For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
 
+## 项目启动操作说明
+### 服务器相关
+```bash
+# 进到 server 目录之下
+cd ./server
+
+# 安装服务器所需第三方包
+npm install
+
+# 启动数据库
+npm run startdb
+
+# 启动服务器
+npm run start
+```
+
+### 启动项目
+``` bash
+# 安装包
+npm install
+
+# 启动
+npm run dev
+```
 
 ## 目录结构描述
 ```

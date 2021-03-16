@@ -10,6 +10,7 @@ let jwt = require('jsonwebtoken') // 用于登陆检测
 // 连接 MongoDB 数据库
 mongoose.connect('mongodb://localhost:27018/mallmanager')
 let User = require('../models/user')
+let Role = require('../models/role')
 
 // 创建路由容器
 let router = express.Router()
@@ -132,13 +133,17 @@ router.get('/users', (req, response) => {
       })
     } else if (decoded) {
       const reg = new RegExp(query, 'i')
-      User.count({ $or: [{ username: { $regex: reg } }] }).then(num => {
+      User.count({
+        $or: [{ username: { $regex: reg } }],
+        isDelete: false
+      }).then(num => {
         User.find({
-          $or: [{ username: { $regex: reg } }]
+          $or: [{ username: { $regex: reg } }],
+          isDelete: false
         })
           .skip(parseInt((pagenum - 1) * pagesize))
           .limit(parseInt(pagesize))
-          .sort({'created_time': -1})
+          .sort({ created_time: -1 })
           .exec()
           .then(data => {
             if (data) {
@@ -150,7 +155,6 @@ router.get('/users', (req, response) => {
                   limit: item.limit,
                   telephone: item.telephone,
                   username: item.username,
-                  role_name: item.role_name,
                   id: item._id
                 })
               })
@@ -163,6 +167,150 @@ router.get('/users', (req, response) => {
               })
             }
           })
+      })
+    }
+  })
+})
+
+// 删除用户
+router.get('/delete', (req, res) => {
+  User.findByIdAndUpdate(req.query.id, {isDelete: true}).then(data => {
+    res.json({
+      status: 200,
+      code: 200,
+      message: '删除成功！'
+    })
+  },err => {
+    if(err) {
+      res.json({
+        status: 200,
+        code: 400,
+        message: '删除失败！'
+      })
+    }
+  })
+})
+
+// 根据 id 修改用户数据
+router.get('/edit', (req, res) => {
+  let {id, telephone, email} = req.query
+  User.findByIdAndUpdate(id, {telephone, email}).then(data => {
+    res.json({
+      status: 200,
+      code: 200,
+      message: '修改用户信息保存成功！'
+    })
+  }, err => {
+    if(err) {
+      res.json({
+        status: 200,
+        code: 400,
+        message: '修改用户信息保存失败！'
+      })
+    }
+  })
+})
+
+// 根据 id 修改用户状态
+router.get('/edit/status', (req, res) => {
+  let {id, status} = req.query
+  User.findByIdAndUpdate(id, {limit: status}).then(data => {
+    res.json({
+      status: 200,
+      code: 200,
+      message: '用户状态修改成功！'
+    })
+  }, err => {
+    if(err) {
+      res.json({
+        status: 200,
+        code: 500,
+        message: '用户状态修改失败！'
+      })
+    }
+  })
+})
+
+// 添加角色
+router.get('/addrole', (req, res) => {
+  let {rid, roleName, roleDesc} = req.query
+  let role = new Role({rid, roleName, roleDesc})
+  role.save().then(res => {
+    console.log('保存成功！')
+  })
+})
+
+// 获取角色列表
+router.get('/getrolelist', (req, res) => {
+  let token = req.headers.authorization
+
+  jwt.verify(token, 'z.2021@sheng_1998', (err, decoded) => {
+    if (err) {
+      res.json({
+        status: 200,
+        code: 301,
+        message: '获取角色列表失败，token已经过期或者未提供正确的token！'
+      })
+    } else if (decoded) {
+      Role.find({}).then(data => {
+        if(data) {
+          res.json({
+            status: 200,
+            code: 200,
+            rolelist: data,
+            message: '获取角色列表成功！'
+          })
+        }
+      })
+    }
+  })
+})
+
+// 根据 id 获取用户信息
+router.get('/getusermessage', (req, res) => {
+  let id = req.query.id
+  User.findById(id).then(data => {
+    if(data) {
+      let usermessage = {}
+      usermessage.rid = data.role_id
+      usermessage.email = data.email
+      usermessage.id = data._id
+      usermessage.username = data.username
+      usermessage.telephone = data.telephone
+      usermessage.role_name = data.role_name
+      res.json({
+        status: 200,
+        code: 200,
+        usermessage: usermessage,
+        message: '获取用户信息成功！'
+      })
+    }
+  }, err => {
+    if(err) {
+      res.json({
+        status: 200,
+        code: 600,
+        message: '获取用户信息失败！'
+      })
+    }
+  })
+})
+
+// 修改用户角色
+router.get('/alterrole', (req, res) => {
+  let {id, rid} = req.query
+  User.findByIdAndUpdate(id, {role_id: rid}).then(data => {
+    res.json({
+      status: 200,
+      code: 200,
+      message: '用户角色修改成功！'
+    })
+  }, err => {
+    if(err) {
+      res.json({
+        status: 200,
+        code: 500,
+        message: '用户角色修改失败！'
       })
     }
   })
