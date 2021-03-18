@@ -27,7 +27,7 @@ let userSchema = new Schema({
     // 权限
     limit: {
         type: Boolean,
-        default: false
+        default: true
     },
     // 角色id
     // 普通用户: 18

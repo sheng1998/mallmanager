@@ -2,11 +2,7 @@
   <div class="users">
     <el-card class="box-card">
       <!-- 面包屑 -->
-      <el-breadcrumb separator="/">
-        <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
-        <el-breadcrumb-item>用户管理</el-breadcrumb-item>
-        <el-breadcrumb-item>用户列表</el-breadcrumb-item>
-      </el-breadcrumb>
+      <my-el-breadcrumb level1="用户管理" level2="用户列表"></my-el-breadcrumb>
 
       <!-- 搜索框和添加用户按钮 -->
       <el-row class="searchRow">
@@ -32,23 +28,23 @@
 
       <!-- 添加用户对话框 -->
       <el-dialog title="添加用户" :visible.sync="dialogFormVisible">
-        <el-form :model="formRegisterMessage">
+        <el-form :model="addUserFormMessage">
           <el-form-item label="用户名" :label-width="formLabelWidth">
             <el-input
-              v-model="formRegisterMessage.username"
+              v-model="addUserFormMessage.username"
               autocomplete="off"
             ></el-input>
           </el-form-item>
           <el-form-item label="电话" :label-width="formLabelWidth">
             <el-input
-              v-model="formRegisterMessage.telephone"
+              v-model="addUserFormMessage.telephone"
               autocomplete="off"
             ></el-input>
           </el-form-item>
           <el-form-item label="邮箱" :label-width="formLabelWidth">
             <el-input
               placeholder="请输入内容"
-              v-model="formRegisterMessage.email"
+              v-model="addUserFormMessage.email"
               class="input-with-select"
             >
               <el-select
@@ -65,21 +61,17 @@
                 ></el-option>
               </el-select>
             </el-input>
-            <!-- <el-input
-              v-model="formRegisterMessage.email"
-              autocomplete="off"
-            ></el-input> -->
           </el-form-item>
           <el-form-item label="密码" :label-width="formLabelWidth">
             <el-input
-              v-model="formRegisterMessage.password"
+              v-model="addUserFormMessage.password"
               autocomplete="off"
               type="password"
             ></el-input>
           </el-form-item>
           <el-form-item label="确认密码" :label-width="formLabelWidth">
             <el-input
-              v-model="formRegisterMessage.password2"
+              v-model="addUserFormMessage.password2"
               autocomplete="off"
               type="password"
             ></el-input>
@@ -152,7 +144,7 @@
       <!-- 用户表格 -->
       <el-table :data="userlist" style="width: 100%">
         <el-table-column type="index" label="#" width="50"></el-table-column>
-        <el-table-column prop="username" label="姓名" width="80">
+        <el-table-column prop="username" label="姓名" width="120">
         </el-table-column>
         <el-table-column prop="email" label="邮箱" width="220">
         </el-table-column>
@@ -230,8 +222,6 @@
 export default {
   data () {
     return {
-      input3: '',
-      select: '',
       searchVal: '', // 查询字符串
       userlist: [], // 用户列表
       status: false, // 用户状态
@@ -243,7 +233,7 @@ export default {
       currentPage: 1, // 前往第几页
       // 添加用户对话框相关数据
       dialogFormVisible: false, // 是否显示对话框
-      formRegisterMessage: {
+      addUserFormMessage: {
         username: '',
         telephone: '',
         email: '',
@@ -288,8 +278,6 @@ export default {
   methods: {
     // 获取用户列表数据
     getUserList () {
-      const AUTH_TOKEN = window.localStorage.getItem('token')
-      this.$axios.defaults.headers.common['Authorization'] = AUTH_TOKEN
       this.$axios
         .get(
           `users?query=${this.searchVal}&pagenum=${this.pagenum}&pagesize=${this.pagesize}`
@@ -311,32 +299,32 @@ export default {
         this.getUserList()
       }
     },
-    // 发送添加用户请求
+    // 添加用户
     addUser () {
-      this.formRegisterMessage.email += this.currentEmailSuffix
-      if (!this.formRegisterMessage.username.trim()) {
+      this.addUserFormMessage.email += this.currentEmailSuffix
+      if (!this.addUserFormMessage.username.trim()) {
         this.$message.warning('请输入用户名！')
-      } else if (!this.formRegisterMessage.telephone.trim()) {
+      } else if (!this.addUserFormMessage.telephone.trim()) {
         this.$message.warning('请输入电话！')
-      } else if (!this.formRegisterMessage.email.trim()) {
+      } else if (!this.addUserFormMessage.email.trim()) {
         this.$message.warning('请输入邮箱！')
-      } else if (!this.formRegisterMessage.password.trim()) {
+      } else if (!this.addUserFormMessage.password.trim()) {
         this.$message.warning('请输入密码！')
-      } else if (!this.formRegisterMessage.password2.trim()) {
+      } else if (!this.addUserFormMessage.password2.trim()) {
         this.$message.warning('请确认密码！')
       } else if (
-        this.formRegisterMessage.password !== this.formRegisterMessage.password2
+        this.addUserFormMessage.password !== this.addUserFormMessage.password2
       ) {
         this.$message.warning('两次输入密码不一致！')
       } else {
-        this.$axios.post('register', this.formRegisterMessage).then(res => {
+        this.$axios.post('add/users', this.addUserFormMessage).then(res => {
           if (res.data.code === 200) {
             this.$message.success('添加用户成功！')
             this.getUserList()
             this.dialogFormVisible = false
-            for (const key in this.formRegisterMessage) {
-              if (this.formRegisterMessage.hasOwnProperty(key)) {
-                this.formRegisterMessage[key] = ''
+            for (const key in this.addUserFormMessage) {
+              if (this.addUserFormMessage.hasOwnProperty(key)) {
+                this.addUserFormMessage[key] = ''
               }
             }
           } else if (res.data.code === 202) {
@@ -350,19 +338,17 @@ export default {
     },
     // 改变每页显示条数触发该事件
     handleSizeChange (val) {
-      console.log(`每页 ${val} 条`)
       this.pagesize = val
       this.getUserList()
     },
     // 该条页数跳转时触发该事件
     handleCurrentChange (val) {
-      console.log(`当前页: ${val}`)
       this.pagenum = val
       this.getUserList()
     },
     // 修改用户状态
     changeUserstatus (id, status) {
-      this.$axios.get('edit/status', { params: { id, status } }).then(res => {
+      this.$axios.get(`alter/users/${id}/status`, { params: { status } }).then(res => {
         if (res.data.code === 200) {
           this.$message.success('用户状态修改成功！')
         } else {
@@ -406,7 +392,7 @@ export default {
     // 编辑用户信息
     editUser () {
       let { id, telephone, email } = this.editUserForm
-      this.$axios.get('edit', { params: { id, telephone, email } }).then(
+      this.$axios.get(`edit/users/${id}`, { params: { telephone, email } }).then(
         res => {
           this.$message.success('修改用户信息成功！')
           this.editUserDialogVisible = false
@@ -422,13 +408,13 @@ export default {
     // 显示分配用户对话框
     showSetUserRoleDia (id) {
       // 查询所有角色列表
-      this.$axios.get('getrolelist').then(res => {
+      this.$axios.get('roles').then(res => {
         let rolelist = res.data.rolelist
         if (rolelist) {
           // 将查询结果赋值给 userRoleList
           this.userRoleList = rolelist
           // 根据用户 id 查询用户信息（角色信息）
-          this.$axios.get('getusermessage', { params: { id } }).then(res => {
+          this.$axios.get(`get/users/${id}/message`).then(res => {
             let usermessage = res.data.usermessage
             if (usermessage) {
               // 将查询到的角色赋值给 currentUser
@@ -444,12 +430,7 @@ export default {
     // 修改用户角色
     alterRole () {
       this.$axios
-        .get('alterrole', {
-          params: {
-            id: this.currentUser.id,
-            rid: this.currentuserRoleId
-          }
-        })
+        .get(`alter/users/${this.currentUser.id}/role/${this.currentuserRoleId}`)
         .then(res => {
           if (res.data.code === 200) {
             this.$message.success('用户角色修改成功！')

@@ -21,8 +21,8 @@ let roleSchema = new Schema({
     },
     // 被管理用户
     children: {
-        type: Object,
-        default: {}
+        type: Array,
+        default: []
     }
 })
 
