@@ -94,7 +94,7 @@
                 type="danger"
                 icon="el-icon-delete"
                 circle
-                @click="deleteRole(scope.row._id)"
+                @click="deleteRole(scope.row.id)"
               ></el-button>
               <!-- 分配角色权限 -->
               <el-button
@@ -125,33 +125,7 @@
               autocomplete="off"
             ></el-input>
           </el-form-item>
-          <el-form-item label="角色权限" label-width="100px">
-            <template>
-              <el-button type="success" @click="showRightTree()"
-                >为角色添加权限</el-button
-              >
-            </template>
-          </el-form-item>
         </el-form>
-        <el-dialog
-          title="权限列表"
-          :visible.sync="rightListDialogVisible"
-          append-to-body
-        >
-          <el-tree
-            ref="mytree"
-            :data="rightTreeData"
-            show-checkbox
-            node-key="id"
-            :props="defaultProps"
-            default-expand-all
-          >
-          </el-tree>
-          <div slot="footer" class="dialog-footer">
-            <el-button @click="setRightDialogVisible = false">取 消</el-button>
-            <el-button type="primary" @click="addRoleRight()">确 定</el-button>
-          </div>
-        </el-dialog>
         <div slot="footer" class="dialog-footer">
           <el-button @click="addRoleDialogVisible = false">取 消</el-button>
           <el-button type="primary" @click="addRole()">添加</el-button>
@@ -208,7 +182,6 @@ export default {
       tableHeight: 500, // 角色列表表格的高度
       rolelist: [], // 角色列表
       addRoleDialogVisible: false, // 添加角色对话框显示与否
-      rightListDialogVisible: false, // 权限列表显示与否
       setRightDialogVisible: false, // 修改角色权限对话框显示与否
       editRoleDialogVisible: false, // 编辑角色对话框显示与否
       currentRoles: {}, // 当前编辑/选中角色
@@ -233,57 +206,78 @@ export default {
     getRoleList () {
       // 查询所有角色列表
       this.$axios.get('roles').then(res => {
-        this.rolelist = res.data.rolelist
+        let {
+          data,
+          meta: { status }
+        } = res.data
+        if (status === 200) {
+          this.rolelist = data
+        } else {
+          this.$message.error('获取角色列表失败！')
+        }
       })
     },
-    // 删除角色权限
+
+    // 取消角色权限
     deleteRoleRight (role, rightId) {
-      this.$axios
-        .get(`delete/roles/${role.rid}/rights/${rightId}`)
-        .then(res => {
-          if (res.data.code === 200) {
-            this.$message.success('删除角色权限成功！')
-            role.children = res.data.data
-          }
-        })
+      this.$axios.delete(`roles/${role.id}/rights/${rightId}`).then(res => {
+        let {
+          data,
+          meta: { status }
+        } = res.data
+        if (status === 200) {
+          this.$message.success('取消角色权限成功！')
+          role.children = data
+        }
+      })
     },
+
     // 显示角色权限列表
     showSetRightDia (role) {
-      this.$axios.get('right/tree').then(res => {
-        this.rightTreeData = res.data.data
-      })
-      let defaultCheckedKeys = []
-      let defaultExpandedKeys = []
-      role.children.forEach(item => {
-        defaultExpandedKeys.push(item.id)
-        item.children.forEach(item => {
-          defaultExpandedKeys.push(item.id)
-          item.children.forEach(item => {
-            defaultCheckedKeys.push(item.id)
+      this.$axios.get('rights/tree').then(res => {
+        let {
+          data,
+          meta: { status }
+        } = res.data
+        if (status === 200) {
+          this.rightTreeData = data
+          let defaultCheckedKeys = []
+          let defaultExpandedKeys = []
+          role.children.forEach(item => {
+            defaultExpandedKeys.push(item.id)
+            item.children.forEach(item => {
+              defaultExpandedKeys.push(item.id)
+              item.children.forEach(item => {
+                defaultCheckedKeys.push(item.id)
+              })
+            })
           })
-        })
+          this.defaultCheckedKeys = defaultCheckedKeys
+          this.defaultExpandedKeys = defaultExpandedKeys
+          this.setRightDialogVisible = true
+          this.currentRoles = role
+        }
       })
-      this.defaultCheckedKeys = defaultCheckedKeys
-      this.defaultExpandedKeys = defaultExpandedKeys
-      this.setRightDialogVisible = true
-      this.currentRoles = role
     },
+
     // 显示编辑角色对话框
     showEditRoleDialogVisible (role) {
       this.currentRoles = role
       this.editRoleDialogVisible = true
     },
+
     // 编辑角色
     alterRole () {
       this.$axios
-        .post(`alter/role/${this.currentRoles._id}`, this.currentRoles)
+        .put(`roles/${this.currentRoles.id}`, this.currentRoles)
         .then(res => {
-          if (res.data.code === 200) {
+          if (res.data.meta.status === 200) {
             this.$message.success('编辑角色成功！')
             this.editRoleDialogVisible = false
           }
         })
     },
+
     // 删除角色
     deleteRole (id) {
       this.$confirm('是否删除该角色?', '提示', {
@@ -292,12 +286,11 @@ export default {
         type: 'warning'
       })
         .then(() => {
-          this.$axios.get(`delete/role/${id}`).then(res => {
-            if (res.data.code === 200) {
-              if (res.data.code === 200) {
-                this.getRoleList()
-                this.$message.success('删除角色成功！')
-              }
+          this.$axios.delete(`roles/${id}`).then(res => {
+            let status = res.data.meta.status
+            if (status === 200) {
+              this.getRoleList()
+              this.$message.success('删除角色成功！')
             } else {
               this.$message.error('删除失败！')
             }
@@ -310,43 +303,30 @@ export default {
           })
         })
     },
+
     // 更新角色权限
     setRoleRight () {
+      let list = this.$refs.tree
+        .getCheckedKeys()
+        .concat(this.$refs.tree.getHalfCheckedKeys())
       this.$axios
-        .post(`update/roles/${this.currentRoles.rid}/rights`, {
-          rightlist: this.rightTreeData,
-          list: this.$refs.tree.getCheckedKeys().concat(this.$refs.tree.getHalfCheckedKeys())
+        .post(`roles/${this.currentRoles.id}/rights`, {
+          rids: list.join(',')
         })
         .then(res => {
-          if (res.data.code === 200) {
-            this.rolelist.forEach((item, index) => {
-              if (item.rid === this.currentRoles.rid) {
-                this.rolelist[index].children = res.data.data
-              }
-            })
+          if (res.data.meta.status === 200) {
+            this.getRoleList()
             this.$message.success('操作角色权限成功！')
             this.setRightDialogVisible = false
           }
         })
     },
+
     // 显示添加角色对话框
     showAddRoleDia () {
       this.addRoleDialogVisible = true
     },
-    // 显示权限树状结构列表
-    showRightTree () {
-      this.$axios.get('right/tree').then(res => {
-        this.rightTreeData = res.data.data
-      })
-      this.rightListDialogVisible = true
-    },
-    // 添加角色权限
-    addRoleRight () {
-      let arr1 = this.$refs.mytree.getCheckedKeys()
-      let arr2 = this.$refs.mytree.getHalfCheckedKeys()
-      this.addRoleForm.children = arr1.concat(arr2)
-      this.rightListDialogVisible = false
-    },
+
     // 添加角色
     addRole () {
       if (!this.addRoleForm.roleName) {
@@ -354,18 +334,25 @@ export default {
       } else if (!this.addRoleForm.roleDesc) {
         this.$message.warning('角色描述不能为空！')
       } else {
-        this.$axios.post('add/role', {
-          data: this.addRoleForm,
-          rightlist: this.rightTreeData
-        }).then(res => {
-          if (res.data.code === 100) {
+        let isExit = false
+        for (let index = 0; index < this.rolelist.length; index++) {
+          if (this.rolelist[index].roleName === this.addRoleForm.roleName) {
+            isExit = true
             this.$message.error('角色名称已存在！')
-          } else if (res.data.code === 200) {
-            this.$message.success('角色添加成功！')
-            this.getRoleList()
-            this.addRoleDialogVisible = false
+            break
           }
-        })
+        }
+        if (!isExit) {
+          this.$axios.post('roles', this.addRoleForm).then(res => {
+            let status = res.data.meta.status
+            if (status === 201) {
+              this.$message.success('角色添加成功！')
+              this.addRoleForm = {}
+              this.getRoleList()
+              this.addRoleDialogVisible = false
+            }
+          })
+        }
       }
     }
   }

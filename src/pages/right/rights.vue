@@ -13,9 +13,9 @@
         </el-table-column>
         <el-table-column prop="level" label="层级">
           <template slot-scope="rightlist">
-            <span v-if="rightlist.row.level === 0">一级</span>
-            <span v-if="rightlist.row.level === 1">二级</span>
-            <span v-if="rightlist.row.level === 2">三级</span>
+            <span v-if="rightlist.row.level === '0'">一级</span>
+            <span v-if="rightlist.row.level === '1'">二级</span>
+            <span v-if="rightlist.row.level === '2'">三级</span>
           </template>
         </el-table-column>
       </el-table>
@@ -38,9 +38,13 @@ export default {
   },
 
   methods: {
+    // 获取权限列表
     getRightList () {
-      this.$axios.get('right/list').then(res => {
-        this.rightlist = res.data.rightlist
+      this.$axios.get('rights/list').then(res => {
+        if (res.data.meta.status === 200) {
+          this.rightlist = res.data.data
+          this.$message.success('获取权限列表成功！')
+        }
       })
     }
   }

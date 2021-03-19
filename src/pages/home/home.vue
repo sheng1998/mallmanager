@@ -25,12 +25,20 @@
         <!-- 左边侧边栏 -->
         <el-aside width="200px" class="aside">
           <el-menu :router="true">
-            <el-submenu :index="'' + item.id" v-for="item in menu" :key="item.id">
+            <el-submenu
+              :index="'' + item.id"
+              v-for="item in menu"
+              :key="item.id"
+            >
               <template slot="title">
                 <i class="el-icon-location"></i>
                 <span>{{ item.authName }}</span>
               </template>
-              <el-menu-item :index="item2.path" v-for="item2 in item.children" :key="item2.id">
+              <el-menu-item
+                :index="item2.path"
+                v-for="item2 in item.children"
+                :key="item2.id"
+              >
                 <i class="el-icon-menu"></i>
                 <span>{{ item2.authName }}</span>
               </el-menu-item>
@@ -63,8 +71,12 @@ export default {
     // 获取侧边栏菜单
     getMenus () {
       this.$axios.get('menus').then(res => {
-        if (res.data.code === 200) {
-          this.menu = res.data.data
+        let {
+          data,
+          meta: { status }
+        } = res.data
+        if (status === 200) {
+          this.menu = data
         }
       })
     },

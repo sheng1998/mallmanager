@@ -37,7 +37,7 @@
           </el-form-item>
           <el-form-item label="电话" :label-width="formLabelWidth">
             <el-input
-              v-model="addUserFormMessage.telephone"
+              v-model="addUserFormMessage.mobile"
               autocomplete="off"
             ></el-input>
           </el-form-item>
@@ -95,7 +95,7 @@
           </el-form-item>
           <el-form-item label="电话" :label-width="editUserLabelWidth">
             <el-input
-              v-model="editUserForm.telephone"
+              v-model="editUserForm.mobile"
               autocomplete="off"
             ></el-input>
           </el-form-item>
@@ -113,7 +113,7 @@
       </el-dialog>
 
       <!-- 分配用户角色对话框 -->
-      <el-dialog title="分配用户角色" :visible.sync="setUserRoleDia">
+      <el-dialog title="分配用户角色" :visible.sync="showSetUserRoleDia">
         <el-form :model="currentUser">
           <!-- 用户名 -->
           <el-form-item label="用户名" label-width="100px">
@@ -130,39 +130,39 @@
                 v-for="(role, i) in userRoleList"
                 :key="i"
                 :label="role.roleName"
-                :value="role.rid"
+                :value="role.id"
               ></el-option>
             </el-select>
           </el-form-item>
         </el-form>
         <div slot="footer" class="dialog-footer">
-          <el-button @click="setUserRoleDia = false">取 消</el-button>
+          <el-button @click="showSetUserRoleDia = false">取 消</el-button>
           <el-button type="primary" @click="alterRole()">确定</el-button>
         </div>
       </el-dialog>
 
       <!-- 用户表格 -->
-      <el-table :data="userlist" style="width: 100%">
+      <el-table :data="userlist" style="width: 100%" :height="tableHeight">
         <el-table-column type="index" label="#" width="50"></el-table-column>
         <el-table-column prop="username" label="姓名" width="120">
         </el-table-column>
         <el-table-column prop="email" label="邮箱" width="220">
         </el-table-column>
-        <el-table-column prop="telephone" label="电话" width="150">
+        <el-table-column prop="mobile" label="电话" width="150">
         </el-table-column>
-        <el-table-column prop="created_time" label="创建时间" width="120">
+        <el-table-column prop="create_time" label="创建时间" width="120">
           <template slot-scope="userlist">
-            {{ userlist.row.created_time | fmtdata }}
+            {{ userlist.row.create_time | fmtdata }}
           </template>
         </el-table-column>
         <!-- 用户表格 --》 用户状态 -->
-        <el-table-column prop="limit" label="用户状态" width="100">
+        <el-table-column prop="mg_state" label="用户状态" width="100">
           <template slot-scope="userlist">
             <el-switch
-              v-model="userlist.row.limit"
+              v-model="userlist.row.mg_state"
               active-color="#13ce66"
               inactive-color="#ff4949"
-              @change="changeUserstatus(userlist.row.id, userlist.row.limit)"
+              @change="changeUserstatus(userlist.row.id, userlist.row.mg_state)"
             >
             </el-switch>
           </template>
@@ -196,7 +196,7 @@
                 type="success"
                 icon="el-icon-check"
                 circle
-                @click="showSetUserRoleDia(userlist.row.id)"
+                @click="setUserRoleDia(userlist.row.id)"
               ></el-button>
             </el-row>
           </template>
@@ -222,9 +222,9 @@
 export default {
   data () {
     return {
+      tableHeight: 500, // 角色列表表格的高度
       searchVal: '', // 查询字符串
       userlist: [], // 用户列表
-      status: false, // 用户状态
       // 分页相关数据
       pagenum: 1, // 页码
       pagesize: 5, // 每页显示的用户数据条数
@@ -233,20 +233,14 @@ export default {
       currentPage: 1, // 前往第几页
       // 添加用户对话框相关数据
       dialogFormVisible: false, // 是否显示对话框
-      addUserFormMessage: {
-        username: '',
-        telephone: '',
-        email: '',
-        password: '',
-        password2: ''
-      },
+      addUserFormMessage: {},
       formLabelWidth: '100px',
       // 编辑用户对话框相关信息
       editUserDialogVisible: false,
       editUserLabelWidth: '80px',
       editUserForm: {},
       // 分配用户角色对话框相关
-      setUserRoleDia: false,
+      showSetUserRoleDia: false,
       currentuserRoleId: '',
       currentUser: {},
       userRoleList: [],
@@ -272,6 +266,7 @@ export default {
   },
 
   created () {
+    this.tableHeight = window.innerHeight - 280
     this.getUserList()
   },
 
@@ -283,31 +278,32 @@ export default {
           `users?query=${this.searchVal}&pagenum=${this.pagenum}&pagesize=${this.pagesize}`
         )
         .then(res => {
-          let resData = res.data
-          if (resData.status === 200 && resData.code === 200) {
-            this.userlist = resData.data
-            this.total = resData.total
+          const {
+            data,
+            meta: { status }
+          } = res.data
+          if (status === 200) {
+            this.userlist = data.users
+            this.total = data.total
             this.$message.success('获取数据成功！')
           } else {
             this.$message.error('获取数据失败！')
           }
         })
     },
+
     // 搜索用户
     searchUser () {
       if (this.searchVal.trim()) {
         this.getUserList()
       }
     },
+
     // 添加用户
     addUser () {
       this.addUserFormMessage.email += this.currentEmailSuffix
       if (!this.addUserFormMessage.username.trim()) {
         this.$message.warning('请输入用户名！')
-      } else if (!this.addUserFormMessage.telephone.trim()) {
-        this.$message.warning('请输入电话！')
-      } else if (!this.addUserFormMessage.email.trim()) {
-        this.$message.warning('请输入邮箱！')
       } else if (!this.addUserFormMessage.password.trim()) {
         this.$message.warning('请输入密码！')
       } else if (!this.addUserFormMessage.password2.trim()) {
@@ -317,8 +313,12 @@ export default {
       ) {
         this.$message.warning('两次输入密码不一致！')
       } else {
-        this.$axios.post('add/users', this.addUserFormMessage).then(res => {
-          if (res.data.code === 200) {
+        if (this.addUserFormMessage.email.trim() === this.currentEmailSuffix) {
+          this.addUserFormMessage.email = ''
+        }
+        this.$axios.post('users', this.addUserFormMessage).then(res => {
+          let status = res.data.meta.status
+          if (status === 201) {
             this.$message.success('添加用户成功！')
             this.getUserList()
             this.dialogFormVisible = false
@@ -327,7 +327,7 @@ export default {
                 this.addUserFormMessage[key] = ''
               }
             }
-          } else if (res.data.code === 202) {
+          } else if (status === 400) {
             this.$message({
               message: '该用户名已经存在！',
               type: 'warning'
@@ -336,20 +336,24 @@ export default {
         })
       }
     },
+
     // 改变每页显示条数触发该事件
     handleSizeChange (val) {
       this.pagesize = val
       this.getUserList()
     },
+
     // 该条页数跳转时触发该事件
     handleCurrentChange (val) {
       this.pagenum = val
       this.getUserList()
     },
+
     // 修改用户状态
     changeUserstatus (id, status) {
-      this.$axios.get(`alter/users/${id}/status`, { params: { status } }).then(res => {
-        if (res.data.code === 200) {
+      this.$axios.put(`users/${id}/state/${status}`).then(res => {
+        let status = res.data.meta.status
+        if (status === 200) {
           this.$message.success('用户状态修改成功！')
         } else {
           this.$message.error('用户状态修改失败！')
@@ -357,6 +361,7 @@ export default {
         }
       })
     },
+
     // 删除提示框
     showDeleteBox (id) {
       this.$confirm('是否删除该用户?', '提示', {
@@ -365,8 +370,9 @@ export default {
         type: 'warning'
       })
         .then(() => {
-          this.$axios.get('delete', { params: { id: id } }).then(res => {
-            if (res.data.code === 200) {
+          this.$axios.delete(`users/${id}`).then(res => {
+            let status = res.data.meta.status
+            if (status === 200) {
               this.getUserList()
               this.$message({
                 type: 'success',
@@ -384,59 +390,67 @@ export default {
           })
         })
     },
+
     // 显示编辑用户对话框
     showEditUserDialogVisible (userdata) {
       this.editUserForm = userdata
       this.editUserDialogVisible = true
     },
+
     // 编辑用户信息
     editUser () {
-      let { id, telephone, email } = this.editUserForm
-      this.$axios.get(`edit/users/${id}`, { params: { telephone, email } }).then(
-        res => {
+      let { id, mobile, email } = this.editUserForm
+      this.$axios.put(`users/${id}`, { id, mobile, email }).then(res => {
+        let status = res.data.meta.status
+        if (status === 200) {
           this.$message.success('修改用户信息成功！')
           this.editUserDialogVisible = false
           this.getUserList()
-        },
-        err => {
-          if (err) {
-            this.$message.error('修改用户信息失败！')
-          }
+        } else {
+          this.$message.error('修改用户信息失败！')
         }
-      )
+      })
     },
+
     // 显示分配用户对话框
-    showSetUserRoleDia (id) {
+    setUserRoleDia (id) {
       // 查询所有角色列表
       this.$axios.get('roles').then(res => {
-        let rolelist = res.data.rolelist
-        if (rolelist) {
+        let {
+          data,
+          meta: { status }
+        } = res.data
+        if (status === 200) {
           // 将查询结果赋值给 userRoleList
-          this.userRoleList = rolelist
+          this.userRoleList = data
           // 根据用户 id 查询用户信息（角色信息）
-          this.$axios.get(`get/users/${id}/message`).then(res => {
-            let usermessage = res.data.usermessage
-            if (usermessage) {
+          this.$axios.get(`users/${id}`).then(res => {
+            console.log(res)
+            let {
+              data,
+              meta: { status }
+            } = res.data
+            if (status === 200) {
               // 将查询到的角色赋值给 currentUser
-              this.currentUser = usermessage
-              this.currentuserRoleId = usermessage.rid
+              this.currentUser = data
+              this.currentuserRoleId = data.rid
               // 显示对话框
-              this.setUserRoleDia = true
+              this.showSetUserRoleDia = true
             }
           })
         }
       })
     },
+
     // 修改用户角色
     alterRole () {
-      this.$axios
-        .get(`alter/users/${this.currentUser.id}/role/${this.currentuserRoleId}`)
-        .then(res => {
-          if (res.data.code === 200) {
-            this.$message.success('用户角色修改成功！')
-            this.setUserRoleDia = false
-          }
-        })
+      this.$axios.put(`users/${this.currentUser.id}/role`, {rid: this.currentuserRoleId}).then(res => {
+        let status = res.data.meta.status
+        if (status === 200) {
+          this.$message.success('用户角色修改成功！')
+          this.showSetUserRoleDia = false
+        }
+      })
     }
   }
 }

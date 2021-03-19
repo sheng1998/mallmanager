@@ -3,7 +3,7 @@ import axios from 'axios'
 const MyAxios = {}
 
 MyAxios.install = function (Vue) {
-  axios.defaults.baseURL = 'http://127.0.0.1:3000/'
+  axios.defaults.baseURL = 'http://127.0.0.1:8888/api/private/v1/'
   // 添加请求拦截器
   axios.interceptors.request.use(
     function (config) {

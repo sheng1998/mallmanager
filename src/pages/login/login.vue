@@ -30,7 +30,7 @@ export default {
   data () {
     return {
       formLoginMessage: {
-        username: 'admit',
+        username: 'admin',
         password: '123456'
       }
     }
@@ -44,13 +44,16 @@ export default {
         this.$message.warning('请输入密码！')
       } else {
         this.$axios.post('login', this.formLoginMessage).then(res => {
-          let data = res.data
-          if (data.code === 200) {
+          let {
+            data,
+            meta: { msg, status }
+          } = res.data
+          if (status === 200) {
             this.$message.success('登陆成功！')
             this.$router.push({ name: 'home' })
             window.localStorage.token = data.token
           } else {
-            this.$message.error('登陆失败，' + data.message)
+            this.$message.error('登陆失败，' + msg)
           }
         })
       }
