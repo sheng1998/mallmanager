@@ -122,6 +122,14 @@ app.use(function(req, res, next) {
   res.sendResult(null, 404, 'Not Found')
 })
 
-app.listen(8888)
+app.listen(8888, () => {
+  console.log('服务器已启动，监听端口：8888')
+  console.log('接口基准地址：http://localhost:8888/api/private/v1/')
+  console.log('服务端已开启 CORS 跨域支持')
+  console.log('API V1 认证统一使用 Token 认证')
+  console.log('需要授权的 API ，必须在请求头中使用 Authorization 字段提供 token 令牌')
+  console.log('使用 HTTP Status Code 标识状态')
+  console.log('数据返回格式统一使用 JSON')
+})
 
 module.exports = app

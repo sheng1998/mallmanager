@@ -1,5 +1,21 @@
 .DS_Store
 node_modules/
-package-lock.json
-tmp_uploads/
-uploads/
+/dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+/.history/
+/.VSCodeCounter/
+tmp_uploads/*.jp*g
+tmp_uploads/*.png
+uploads/goodspics/*.jp*g
+uploads/goodspics/*.png
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+

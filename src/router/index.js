@@ -5,7 +5,9 @@ import Home from '../pages/home/home.vue'
 import Users from '../pages/users/users.vue'
 import Right from '../pages/right/rights.vue'
 import Role from '../pages/role/roles.vue'
-import Goods from '../pages/goods/goods.vue'
+import Goodslist from '../pages/goods/goodslist.vue'
+import GoodsAdd from '../pages/goods/goodsadd.vue'
+import GoodsEdit from '../pages/goods/goodsedit.vue'
 
 import { Message } from 'element-ui'
 
@@ -24,20 +26,28 @@ let router = new Router({
       children: [
         {
           name: 'users',
-          path: 'users',
+          path: '/users',
           component: Users
         }, {
           name: 'rights',
-          path: 'rights',
+          path: '/rights',
           component: Right
         }, {
           name: 'roles',
-          path: 'roles',
+          path: '/roles',
           component: Role
         }, {
-          name: 'goods',
-          path: 'goods',
-          component: Goods
+          name: 'goodslist',
+          path: '/goods',
+          component: Goodslist
+        }, {
+          name: 'goodsadd',
+          path: '/goodsadd',
+          component: GoodsAdd
+        }, {
+          name: 'goodsedit',
+          path: '/goodsedit',
+          component: GoodsEdit
         }
       ]
     }
