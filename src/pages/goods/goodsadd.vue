@@ -32,7 +32,7 @@
 
       <el-form
         label-position="right"
-        label-width="110px"
+        label-width="150px"
         :model="goodsForm"
         style="height: 450px; overflow: auto;"
       >
@@ -80,10 +80,9 @@
               <el-checkbox-group v-model="item.attr_vals">
                 <el-checkbox
                   border
-                  v-for="(item2, index2) in item.attr_vals"
+                  v-for="(item2, index2) in item.attr_vals2"
                   :key="index2"
                   :label="item2"
-                  :name="item2"
                 ></el-checkbox>
               </el-checkbox-group>
             </el-form-item>
@@ -211,10 +210,10 @@ export default {
         if (this.goodsForm.goods_cat.length === 0) {
           return this.$message.error('请先选择商品分类（基本信息->商品分类）')
         } else {
-          let goodsCat = this.goodsForm.goods_cat
-          let cid = goodsCat[goodsCat.length - 1]
           this.$axios
-            .get(`categories/${cid}/attributes`, { params: { sel: 'many' } })
+            .get(`categories/${this.goodsForm.goods_cat[2]}/attributes`, {
+              params: { sel: 'many' }
+            })
             .then(res => {
               let {
                 data,
@@ -222,10 +221,12 @@ export default {
               } = res.data
               if (status === 200) {
                 data.forEach(item => {
-                  item.attr_vals =
+                  item.attr_vals2 =
                     item.attr_vals.length === 0
                       ? []
                       : item.attr_vals.trim().split(',')
+                  item.attr_vals = []
+                  item.attr_vals2 = [...new Set(item.attr_vals2)]
                 })
                 this.arrDyParams = data
               }
@@ -236,10 +237,10 @@ export default {
         if (this.goodsForm.goods_cat.length === 0) {
           return this.$message.error('请先选择商品分类（基本信息->商品分类）')
         } else if (this.hasStaticParams === false) {
-          let goodsCat = this.goodsForm.goods_cat
-          let cid = goodsCat[goodsCat.length - 1]
           this.$axios
-            .get(`categories/${cid}/attributes`, { params: { sel: 'only' } })
+            .get(`categories/${this.goodsForm.goods_cat[2]}/attributes`, {
+              params: { sel: 'only' }
+            })
             .then(res => {
               let {
                 data,
@@ -271,10 +272,13 @@ export default {
 
     // 添加商品请求
     addGoods () {
-      let arr1 = this.arrDyParams.map(item => {
-        return {
-          attr_id: item.attr_id,
-          attr_vals: item.attr_vals
+      let arr1 = []
+      this.arrDyParams.forEach(item => {
+        if (item.attr_vals.length > 0) {
+          arr1.push({
+            attr_id: item.attr_id,
+            attr_vals: item.attr_vals
+          })
         }
       })
       let arr2 = this.arrStaticParams.map(item => {
@@ -308,7 +312,7 @@ export default {
           let {
             meta: { msg, status }
           } = res.data
-          console.log(res)
+          // "49吋4K超薄曲面 人工智能,55吋4K观影曲面 30核HDR,55吋4K超薄曲面 人工智能,65吋4K超薄曲面 人工智能,11,11,11,22,22"
           if (status === 201) {
             this.$message.success(msg)
             this.$router.push({ name: 'goodslist' })

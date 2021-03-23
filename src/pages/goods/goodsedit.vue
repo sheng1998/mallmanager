@@ -32,7 +32,7 @@
 
       <el-form
         label-position="right"
-        label-width="110px"
+        label-width="150px"
         :model="goodsForm"
         style="height: 450px; overflow: auto;"
       >
@@ -42,6 +42,7 @@
           tab-position="left"
           style="margin-top: 30px"
           @tab-click="tabChange()"
+          :lazy="true"
         >
           <!-- 添加商品 —— 基本信息 -->
           <el-tab-pane name="1" label="基本信息">
@@ -72,7 +73,8 @@
 
           <!-- 添加商品 —— 商品参数 -->
           <el-tab-pane name="2" label="商品参数">
-            <el-form-item
+            <div v-loading="loading">
+              <el-form-item
               v-for="(item, i) in arrDyParams"
               :key="i"
               :label="item.attr_name + '：'"
@@ -80,13 +82,13 @@
               <el-checkbox-group v-model="item.attr_vals">
                 <el-checkbox
                   border
-                  v-for="(item2, index2) in item.attr_vals"
+                  v-for="(item2, index2) in item.attr_vals2"
                   :key="index2"
                   :label="item2"
-                  :name="item2"
                 ></el-checkbox>
               </el-checkbox-group>
             </el-form-item>
+            </div>
           </el-tab-pane>
 
           <!-- 添加商品 —— 商品属性 -->
@@ -165,11 +167,14 @@ export default {
       //   商品参数页面相关数据
       arrDyParams: [], // 动态参数数据
       arrStaticParams: [], // 静态参数数据
-      hasStaticParams: true, // 是否已经获取静态参数
+      hasStaticParams: true, // 是否已经获取动态参数
+      hasDyParams: true, // 是否已经获取静态参数
       headers: {
         Authorization: localStorage.getItem('token')
       }, // 上传图片请求头部
-      fileList: [] // 图片列表数据
+      fileList: [], // 图片列表数据
+
+      loading: true
     }
   },
 
@@ -203,7 +208,7 @@ export default {
                 this.arrDyParams.push({
                   attr_id: item.attr_id,
                   attr_name: item.attr_name,
-                  attr_vals: item.attr_vals
+                  attr_vals: [...new Set(item.attr_vals.split(','))]
                 })
               } else if (item.attr_sel === 'only') {
                 this.arrStaticParams.push({
@@ -242,6 +247,7 @@ export default {
 
     // 添加商品的级联选择器改变时触发该事件
     handleChange () {
+      this.hasDyParams = false
       this.hasStaticParams = false
     },
 
@@ -259,10 +265,8 @@ export default {
         if (this.goodsForm.goods_cat.length === 0) {
           return this.$message.error('请先选择商品分类（基本信息->商品分类）')
         } else {
-          let goodsCat = this.goodsForm.goods_cat
-          let cid = goodsCat[goodsCat.length - 1]
           this.$axios
-            .get(`categories/${cid}/attributes`, { params: { sel: 'many' } })
+            .get(`categories/${this.goodsForm.goods_cat[2]}/attributes`, { params: { sel: 'many' } })
             .then(res => {
               let {
                 data,
@@ -270,12 +274,15 @@ export default {
               } = res.data
               if (status === 200) {
                 data.forEach(item => {
-                  item.attr_vals =
+                  item.attr_vals2 =
                     item.attr_vals.length === 0
                       ? []
                       : item.attr_vals.trim().split(',')
+                  item.attr_vals = item.attr_vals2
+                  item.attr_vals2 = [...new Set(item.attr_vals2)]
                 })
                 this.arrDyParams = data
+                this.loading = false
               }
             })
         }
@@ -284,10 +291,8 @@ export default {
         if (this.goodsForm.goods_cat.length === 0) {
           return this.$message.error('请先选择商品分类（基本信息->商品分类）')
         } else if (this.hasStaticParams === false) {
-          let goodsCat = this.goodsForm.goods_cat
-          let cid = goodsCat[goodsCat.length - 1]
           this.$axios
-            .get(`categories/${cid}/attributes`, { params: { sel: 'only' } })
+            .get(`categories/${this.goodsForm.goods_cat[2]}/attributes`, { params: { sel: 'only' } })
             .then(res => {
               let {
                 data,
@@ -358,20 +363,24 @@ export default {
       } else {
         this.goodsForm.goods_cat = this.goodsForm.goods_cat.join(',')
         this.goodsForm.id = this.goodsForm.goods_id
-        this.$axios.put(`goods/${this.goodsForm.id}`, this.goodsForm).then(res => {
-          let {
-            meta: { msg, status }
-          } = res.data
-          if (status === 200) {
-            this.$message.success(msg)
-            this.$router.push({name: 'goodslist'})
-          } else {
-            this.goodsForm.goods_cat = this.goodsForm.goods_cat.split(',').map(item => {
-              return Number(item)
-            })
-            this.$message.error(msg)
-          }
-        })
+        this.$axios
+          .put(`goods/${this.goodsForm.id}`, this.goodsForm)
+          .then(res => {
+            let {
+              meta: { msg, status }
+            } = res.data
+            if (status === 200) {
+              this.$message.success(msg)
+              this.$router.push({ name: 'goodslist' })
+            } else {
+              this.goodsForm.goods_cat = this.goodsForm.goods_cat
+                .split(',')
+                .map(item => {
+                  return Number(item)
+                })
+              this.$message.error(msg)
+            }
+          })
       }
     }
   }
@@ -379,6 +388,19 @@ export default {
 </script>
 
 <style lang="less" scoped>
+.el-checkbox {
+  margin-right: 10px;
+
+  &.is-bordered + .el-checkbox.is-bordered {
+    margin-left: 0;
+    margin-right: 10px;
+  }
+}
+
+.el-upload__tip {
+  padding: 5px 0;
+}
+
 .my-quill-editor {
   margin-top: 10px;
   height: 350px;

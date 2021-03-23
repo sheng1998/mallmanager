@@ -8,6 +8,10 @@ import Role from '../pages/role/roles.vue'
 import Goodslist from '../pages/goods/goodslist.vue'
 import GoodsAdd from '../pages/goods/goodsadd.vue'
 import GoodsEdit from '../pages/goods/goodsedit.vue'
+import CateParams from '../pages/goods/cateparams.vue'
+import GoodsCate from '../pages/goods/goodscate.vue'
+import Order from '../pages/orders/orders.vue'
+import Report from '../pages/reports/reports.vue'
 
 import { Message } from 'element-ui'
 
@@ -48,6 +52,22 @@ let router = new Router({
           name: 'goodsedit',
           path: '/goodsedit',
           component: GoodsEdit
+        }, {
+          name: 'cateparams',
+          path: '/params',
+          component: CateParams
+        }, {
+          name: 'goodscate',
+          path: '/categories',
+          component: GoodsCate
+        }, {
+          name: 'orders',
+          path: '/orders',
+          component: Order
+        }, {
+          name: 'reports',
+          path: '/reports',
+          component: Report
         }
       ]
     }
